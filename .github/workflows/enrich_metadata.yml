@@ -1,0 +1,26 @@
+name: Enrich Metadata (Covers + Steam Info)
+
+on:
+  schedule:
+    - cron: '0 14 * * *'  # daily at 14:00 UTC (1hr after Xbox sync)
+  workflow_dispatch:       # manual trigger
+
+jobs:
+  enrich:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests beautifulsoup4
+
+      - name: Run enrichment script
+        run: python enrich_metadata.py
+        env:
+          NOTION_API_KEY:      ${{ secrets.NOTION_API_KEY }}
+          NOTION_DATABASE_ID:  ${{ secrets.NOTION_DATABASE_ID }}
+          STEAMGRIDDB_API_KEY: ${{ secrets.STEAMGRIDDB_API_KEY }}
