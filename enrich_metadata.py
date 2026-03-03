@@ -83,22 +83,21 @@ def get_all_notion_pages():
     return pages
 
 
-def update_notion_page(page_id, cover_url=None, info=None, tags=None):
-    """Update a Notion page with cover art, info, and/or tags."""
+def update_notion_page(page_id, cover_url=None, icon_url=None, info=None, tags=None):
     payload = {"properties": {}}
 
     if info:
         payload["properties"]["info"] = {
             "rich_text": [{"type": "text", "text": {"content": info[:2000]}}]
         }
-
     if tags:
         payload["properties"]["tags"] = {
             "multi_select": [{"name": t} for t in tags[:20]]
         }
-
     if cover_url:
         payload["cover"] = {"type": "external", "external": {"url": cover_url}}
+    if icon_url:
+        payload["icon"] = {"type": "external", "external": {"url": icon_url}}
 
     result = notion_request("patch", f"/pages/{page_id}", payload)
     return result is not None
@@ -150,6 +149,22 @@ def get_sgdb_horizontal_cover(name):
                 return url
 
     logger.warning(f"  SGDB: no horizontal cover found for '{name}'")
+    return None
+
+def get_sgdb_icon(name):
+    """Fetch an icon/logo URL from SteamGridDB."""
+    game_id = get_sgdb_game_id(name)
+    if not game_id:
+        return None
+
+    data = sgdb_get(f"/icons/game/{game_id}?limit=1")
+    if data and data.get("success") and data.get("data"):
+        url = data["data"][0].get("url")
+        if url:
+            logger.info(f"  SGDB: found icon for '{name}'")
+            return url
+
+    logger.warning(f"  SGDB: no icon found for '{name}'")
     return None
 
 
@@ -274,12 +289,13 @@ if __name__ == "__main__":
         info      = None
         tags      = None
 
-        # Fetch horizontal cover from SteamGridDB
+        # Fetch horizontal cover + icon from SteamGridDB
         if needs_cover:
             cover_url = get_sgdb_horizontal_cover(name)
+            icon_url  = get_sgdb_icon(name)
             if not cover_url:
                 no_cover += 1
-            time.sleep(0.3)  # SGDB rate limit courtesy
+            time.sleep(0.3)
 
         # Fetch info + tags from Steam store (only if needed)
         if needs_info or needs_tags:
@@ -294,7 +310,7 @@ if __name__ == "__main__":
 
         # Push update to Notion
         if cover_url or info or tags:
-            success = update_notion_page(page_id, cover_url=cover_url, info=info, tags=tags)
+            success = update_notion_page(page_id, icon_url=icon_url, cover_url=cover_url, info=info, tags=tags)
             if success:
                 logger.info(f"  ✓ Updated: {name}")
                 updated += 1
