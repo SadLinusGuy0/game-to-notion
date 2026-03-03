@@ -191,7 +191,7 @@ def update_item_to_notion_database(page_id, game, achievements_info, review_text
         return response.json()
         
     except requests.exceptions.RequestException as e:
-    logger.error(f"Request failed: {e}, response: {response.text}, retrying...")
+        logger.error(f"Request failed: {e}, response: {response.text}, retrying...")
 
 
 # ─────────────────────────────────────────────
