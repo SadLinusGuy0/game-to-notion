@@ -33,17 +33,18 @@ def send_request_with_retry(url, headers=None, json_data=None, retries=MAX_RETRI
                 response = requests.post(url, headers=headers, json=json_data)
             elif method == "get":
                 response = requests.get(url)
+            if not response.ok:
+                logger.error(f"Request failed with {response.status_code}: {response.text}")
             response.raise_for_status()
             return response
         except requests.exceptions.RequestException as e:
-            logger.error(f"Request failed: {e}, retrying...")
+            logger.error(f"Request exception: {e}")
             retries -= 1
             if retries > 0:
                 time.sleep(RETRY_DELAY)
             else:
                 logger.error("Max retries exceeded, giving up.")
                 return {}
-
 
 # ─────────────────────────────────────────────
 # STEAM API
