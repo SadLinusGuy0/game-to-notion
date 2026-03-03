@@ -259,7 +259,7 @@ if __name__ == "__main__":
             continue
 
         page_id      = page["id"]
-        needs_cover  = page_needs_cover(page)
+        needs_cover  = True
         needs_info   = page_needs_info(page)
         needs_tags   = page_needs_tags(page)
 
